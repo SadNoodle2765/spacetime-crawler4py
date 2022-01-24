@@ -14,6 +14,7 @@ def scraper(url, resp):
     global DISCOVERED_LINKS
     global TRAVERSED_COUNT
     links = extract_next_links(url, resp)
+    links = [link for link in links if is_valid(link)]
 
     links_file = open('Logs/DiscoveredLinks.log', "a")
     for link in links:
@@ -22,12 +23,16 @@ def scraper(url, resp):
     links_file.close()
 
     DISCOVERED_LINKS |= set(links)
-    test = [link for link in links if is_valid(link)]
     #print(test)
     TRAVERSED_COUNT += 1
+
+    for link in links:
+        print(link)
+
     print('Discovered Link Count: ' + str(len(DISCOVERED_LINKS)))
     print('Number of Links Traversed: ' + str(TRAVERSED_COUNT))
-    return test
+
+    return links
 
 def extract_next_links(url, resp): 
     url_scheme = urlparse(url).scheme       # Getting scheme and netloc to append
@@ -66,9 +71,6 @@ def extract_next_links(url, resp):
                 break
         #filtered_links.append(link)
 
-
-    for link in filtered_links:
-        print(link)
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
