@@ -1,6 +1,7 @@
 import re
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+import urllib.robotparser
 
 ACCEPTED_DOMAINS = [re.compile(r'.*[\W]ics\.uci\.edu\/.*'), re.compile(r'.*[\W]cs\.uci\.edu\/.*'),
                     re.compile(r'.*[\W]infomatics\.uci\.edu\/.*'), re.compile(r'.*[\W]stats\.uci\.edu\/.*'),
@@ -9,6 +10,8 @@ ACCEPTED_DOMAINS = [re.compile(r'.*[\W]ics\.uci\.edu\/.*'), re.compile(r'.*[\W]c
 DISCOVERED_LINKS = set()
 
 TRAVERSED_COUNT = 0
+
+ROBOTS_TXT = dict()
 
 def scraper(url, resp):
     global DISCOVERED_LINKS
@@ -66,8 +69,19 @@ def extract_next_links(url, resp):
 
         for pattern in ACCEPTED_DOMAINS:
             match = re.match(pattern, link)
+                
             if match:
-                filtered_links.add(link)
+                if not ROBOTS_TXT.get(url_netloc):
+                    robotParser = urllib.robotparser.RobotFileParser()
+                    robotParser.set_url(f'{url_scheme}://{url_netloc}/robots.txt')
+                    robotParser.read()
+                    ROBOTS_TXT[url_netloc] = robotParser
+                if ROBOTS_TXT[url_netloc].can_fetch('*', link):    
+                    filtered_links.add(link)
+                else:
+                    disallowLinks_file = open('Logs/DisallowLinks.log', "a")
+                    disallowLinks_file.write(link + '\n')
+                    disallowLinks_file.close()
                 break
         #filtered_links.append(link)
 
