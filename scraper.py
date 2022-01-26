@@ -48,16 +48,22 @@ def extract_next_links(url, resp):
     filtered_links = set()
 
     for link in links: 
-
+        print('hello')
         parsed_link = urlparse(link)
         # First character checks
         if re.match(r'^#.*$', link):                        # Get rid of scroll-to tags
             continue
+
+        if re.match(r'\d+', link):                          # ignores calendar/event formats in urls
+            print('CALENDAR FOUND' , link)
+            continue                                        # i.e : yyyy-mm-dd or yy-mm-dd or mm-dd
+
         elif re.match(r'^\/[^\/].+$', link):                  # First character is / (relative path)
             link = f'{url_scheme}://{url_netloc}{link}'     # Add the scheme and netloc to the beginning link
         elif re.match(r'^\/\/.+$', link):
             link = f'{url_scheme}:{link}'                   # First characters are //  (use same scheme)
                                                             # Add scheme to the beginning of link
+
 
         
         link = link.split('?')[0]
@@ -77,6 +83,11 @@ def extract_next_links(url, resp):
                     ROBOTS_TXT[url_netloc] = robotParser
                     # print(robotParser.site_maps())
                 if ROBOTS_TXT[url_netloc].can_fetch('*', link):    # is the link allowed
+                    # TO DO: 
+                    # figure out number of tokens in each web page
+                    # determine if the page has low information value
+                    # or if the pages just have no information
+                    # 
                     filtered_links.add(link)
                 else:
                     disallowLinks_file = open('Logs/DisallowLinks.log', "a")
@@ -113,7 +124,9 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|pdf|pptx|docx|jpg|"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
+            # added .diff extensions here
+            + r"|diff)$", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", parsed)
