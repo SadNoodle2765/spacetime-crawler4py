@@ -2,7 +2,6 @@ import re
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import urllib.robotparser
-
 ACCEPTED_DOMAINS = [re.compile(r'.*[\W]ics\.uci\.edu\/.*'), re.compile(r'.*[\W]cs\.uci\.edu\/.*'),
                     re.compile(r'.*[\W]infomatics\.uci\.edu\/.*'), re.compile(r'.*[\W]stats\.uci\.edu\/.*'),
                     re.compile(r'.*today\.uci\.edu\/department\/information_computer_sciences\/*')]
@@ -71,12 +70,13 @@ def extract_next_links(url, resp):
             match = re.match(pattern, link)
                 
             if match:
-                if not ROBOTS_TXT.get(url_netloc):
-                    robotParser = urllib.robotparser.RobotFileParser()
+                if not ROBOTS_TXT.get(url_netloc):                  #domain is not matched before
+                    robotParser = urllib.robotparser.RobotFileParser()   # parse robots.txt and save it in dictionary
                     robotParser.set_url(f'{url_scheme}://{url_netloc}/robots.txt')
                     robotParser.read()
                     ROBOTS_TXT[url_netloc] = robotParser
-                if ROBOTS_TXT[url_netloc].can_fetch('*', link):    
+                    # print(robotParser.site_maps())
+                if ROBOTS_TXT[url_netloc].can_fetch('*', link):    # is the link allowed
                     filtered_links.add(link)
                 else:
                     disallowLinks_file = open('Logs/DisallowLinks.log', "a")
