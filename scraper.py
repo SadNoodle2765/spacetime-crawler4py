@@ -48,17 +48,18 @@ def extract_next_links(url, resp):
     filtered_links = set()
 
     for link in links: 
-        print('hello')
-        parsed_link = urlparse(link)
+        
         # First character checks
         if re.match(r'^#.*$', link):                        # Get rid of scroll-to tags
             continue
 
-        if re.match(r'\d+', link):                          # ignores calendar/event formats in urls
-            print('CALENDAR FOUND' , link)
+        if re.search(r'[\d\d\d\d]{2,}-\d\d(?:-\d\d)?', link):                          # ignores calendar/event formats in urls
             continue                                        # i.e : yyyy-mm-dd or yy-mm-dd or mm-dd
 
-        elif re.match(r'^\/[^\/].+$', link):                  # First character is / (relative path)
+
+        parsed_link = urlparse(link)
+
+        if re.match(r'^\/[^\/].+$', link):                  # First character is / (relative path)
             link = f'{url_scheme}://{url_netloc}{link}'     # Add the scheme and netloc to the beginning link
         elif re.match(r'^\/\/.+$', link):
             link = f'{url_scheme}:{link}'                   # First characters are //  (use same scheme)
