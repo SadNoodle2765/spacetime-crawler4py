@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import urllib.robotparser
 ACCEPTED_DOMAINS = [re.compile(r'.*[\W]ics\.uci\.edu\/.*'), re.compile(r'.*[\W]cs\.uci\.edu\/.*'),
-                    re.compile(r'.*[\W]infomatics\.uci\.edu\/.*'), re.compile(r'.*[\W]stats\.uci\.edu\/.*'),
+                    re.compile(r'.*[\W]informatics\.uci\.edu\/.*'), re.compile(r'.*[\W]stat\.uci\.edu\/.*'),
                     re.compile(r'.*today\.uci\.edu\/department\/information_computer_sciences\/*')]
 
 DISCOVERED_LINKS = set()
@@ -74,7 +74,7 @@ def extract_next_links(url, resp):
             continue
 
         for pattern in ACCEPTED_DOMAINS:
-            match = re.match(pattern, link)
+            match = re.search(pattern, link)
                 
             if match:
                 if not ROBOTS_TXT.get(url_netloc):                  #domain is not matched before
