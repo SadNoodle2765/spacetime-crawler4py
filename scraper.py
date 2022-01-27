@@ -1,26 +1,98 @@
 import re
+from tokenizer import computeWordFrequencies, tokenize
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+from collections import defaultdict, Counter
 import urllib.robotparser
+
+
 ACCEPTED_DOMAINS = [re.compile(r'.*[\W]ics\.uci\.edu\/.*'), re.compile(r'.*[\W]cs\.uci\.edu\/.*'),
                     re.compile(r'.*[\W]informatics\.uci\.edu\/.*'), re.compile(r'.*[\W]stat\.uci\.edu\/.*'),
                     re.compile(r'.*today\.uci\.edu\/department\/information_computer_sciences\/*')]
 
 DISCOVERED_LINKS = set()
 
+DISCOVERED_SUBDOMAINS = defaultdict(int)
+
+TOKEN_DICT = dict() 
+
+MAX_WORD_PAGE = ""
+
+MAX_WORD_COUNT = 0
+
 TRAVERSED_COUNT = 0
 
 ROBOTS_TXT = dict()
 
+def writeDataToFiles():
+    subdomain_file = open('Logs/Subdomains.log', "w")
+    token_file = open('Logs/TokenCount.log', "w")
+    max_word_file = open('Logs/MaxWordPage.log', "w")
+
+    for link in DISCOVERED_SUBDOMAINS.items():
+        subdomain_file.write(f'{link[0]} -> {link[1]}\n')
+
+    sortedTokens = sorted(((token, count) for token, count in TOKEN_DICT.items()), key = (lambda k: (-k[1],k[0])))
+
+    for token, count in sortedTokens[:50]:
+        token_file.write(f'{token} -> {count}\n')
+
+    max_word_file.write(f'{MAX_WORD_PAGE} -> {MAX_WORD_COUNT}')
+
+    subdomain_file.close()
+    token_file.close()
+    max_word_file.close()
+
+
+def updateMaxWordPage(resp):
+    global MAX_WORD_COUNT
+    global MAX_WORD_PAGE
+
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    content = soup.get_text()
+    tokens = tokenize(content)
+
+
+    wordCount = len(tokens)
+
+    if wordCount > MAX_WORD_COUNT:
+        MAX_WORD_COUNT = wordCount
+        MAX_WORD_PAGE = resp.url
+
+def updateTokenDict(resp):
+    global TOKEN_DICT
+    content = resp.raw_response.content
+    soup = BeautifulSoup(content, 'html.parser')
+    texts = soup.get_text()
+
+    new_dict = computeWordFrequencies(texts)
+    TOKEN_DICT = dict(Counter(TOKEN_DICT) + Counter(new_dict))
+
+    updateMaxWordPage(resp)
+
+
+
 def scraper(url, resp):
     global DISCOVERED_LINKS
     global TRAVERSED_COUNT
+
+    updateTokenDict(resp)
+
+    # DEBUG/TESTING
+    if (TRAVERSED_COUNT >= 20):
+        writeDataToFiles()
+
     links = extract_next_links(url, resp)
     links = [link for link in links if is_valid(link)]
 
     links_file = open('Logs/DiscoveredLinks.log', "a")
     for link in links:
+        url_netloc = urlparse(link).netloc
+        if re.search(r'.+[\W]ics\.uci\.edu.*', url_netloc):
+            DISCOVERED_SUBDOMAINS[url_netloc] += 1
+            #print(f'{url_netloc} -> {DISCOVERED_SUBDOMAINS[url_netloc]}')
         links_file.write(link + '\n')
+
 
     links_file.close()
 
