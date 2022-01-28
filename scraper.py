@@ -29,8 +29,10 @@ def writeDataToFiles():
     token_file = open('Logs/TokenCount.log', "w")
     max_word_file = open('Logs/MaxWordPage.log', "w")
 
-    for link in DISCOVERED_SUBDOMAINS.items():
-        subdomain_file.write(f'{link[0]} -> {link[1]}\n')
+    sortedSubdomains = sorted(((domain, count) for domain, count in DISCOVERED_SUBDOMAINS.items()), key = (lambda k: (-k[1],k[0])))
+
+    for subdomain, count in sortedSubdomains:
+        subdomain_file.write(f'{subdomain} -> {count}\n')
 
     sortedTokens = sorted(((token, count) for token, count in TOKEN_DICT.items()), key = (lambda k: (-k[1],k[0])))
 
@@ -60,6 +62,9 @@ def updateMaxWordPage(resp):
         MAX_WORD_PAGE = resp.url
 
 def updateTokenDict(resp):
+    if resp.status < 200 or resp.status > 399:
+        return
+
     global TOKEN_DICT
     content = resp.raw_response.content
     soup = BeautifulSoup(content, 'html.parser')
@@ -79,8 +84,8 @@ def scraper(url, resp):
     updateTokenDict(resp)
 
     # DEBUG/TESTING
-    if (TRAVERSED_COUNT >= 20):
-        writeDataToFiles()
+    #if (TRAVERSED_COUNT >= 20):
+    #    writeDataToFiles()
 
     links = extract_next_links(url, resp)
     links = [link for link in links if is_valid(link)]
