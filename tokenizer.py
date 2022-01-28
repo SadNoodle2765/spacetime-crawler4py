@@ -10,10 +10,18 @@ import requests
 
 def tokenize(texts):
     tokens = []
-    pattern = re.compile("(?:[a-zA-Z0-9]+(?:-?'?[a-zA-Z0-9]+)+)|[aiAI]")
+    pattern = re.compile("(?:[a-zA-Z0-9]{2,}(?:-?'?[a-zA-Z0-9]+)*)|[aiAI]")
     for token in pattern.findall(texts):
         tokens.append(token.lower())
     return tokens
+
+def tokenizeForWordFrq(texts):
+    tokens = []
+    pattern = re.compile("[a-zA-Z]{3,}(?:-?'?[a-zA-Z0-9]+)*")
+    for token in pattern.findall(texts):
+        tokens.append(token.lower())
+    return tokens
+
 
 
 def computeWordFrequencies(texts):
@@ -22,7 +30,7 @@ def computeWordFrequencies(texts):
         for line in f.readlines():
             stopwords[line.strip()] = 1
 
-    tokenList = tokenize(texts)
+    tokenList = tokenizeForWordFrq(texts)
     freqencyDict = {}
     for token in tokenList:
         if token not in stopwords:
